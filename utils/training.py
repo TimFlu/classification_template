@@ -23,7 +23,10 @@ def metric_evaluation(labels, pred, binary=True, num_classes=None):
     # For AUC calculation
     if binary:
         # Binary AUC
-        auc = roc_auc_score(labels, pred)
+        if len(np.unique(labels)) < 2:
+            auc = np.nan  # Handle missing classes
+        else:
+            auc = roc_auc_score(labels, pred)
         # Convert predictions to binary (0 or 1) for metrics
         pred = [1 if i > 0.5 else 0 for i in pred]
     else:
@@ -159,6 +162,8 @@ def train_model(device, comet_logger, cfg):
         logger.info("Training the model ...")
         model.train()
         for i, (images, labels) in enumerate(train_loader):
+            if train_dataset.binary:
+                labels = labels.reshape(-1, 1).float()
             images = images.to(device)
             labels = labels.to(device)
             optimizer.zero_grad()
@@ -200,6 +205,8 @@ def train_model(device, comet_logger, cfg):
         logger.info("Testing the model ...")
         model.eval()
         for i, (images, labels) in enumerate(test_loader):
+            if train_dataset.binary:
+                labels = labels.reshape(-1, 1).float()
             images = images.to(device)
             labels = labels.to(device)
             with torch.no_grad():
