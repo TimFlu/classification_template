@@ -2,7 +2,8 @@ import sys
 #TODO: Change the path to the working directory
 sys.path.append('/storage/homefs/tf24s166/code/cifar10/') 
 from utils.datasets import CustomDataset
-from utils.log import comet_log_metrics
+from utils.log import comet_log_metrics, comet_log_figure
+from utils.plots import plot_confidence_histogram, plot_reliability_diagram
 
 import os
 import numpy as np
@@ -146,7 +147,7 @@ def train_model(device, comet_logger, cfg):
 
     ### Train and Test ###
     best_test_loss = 10e10
-    for epoch in range(cfg.training.epochs):
+    for epoch in range(1, 1+cfg.training.epochs):
         logger.info(f'-------- Epoch: {epoch+1}/{cfg.training.epochs} --------')
 
         # Store predictions and labels over the epoch
@@ -246,6 +247,11 @@ def train_model(device, comet_logger, cfg):
         
 
         ### After Test and Training evaluations ###
+        fig_conf_hist = plot_confidence_histogram(epoch_labels['test'], epoch_preds['test'], save_path=os.getcwd(), num_bins=10)
+        comet_log_figure(comet_logger, fig_conf_hist, 'confidence_histogram', epoch, cfg)
+        fig_reliability = plot_reliability_diagram(epoch_labels['test'], epoch_preds['test'], save_path=os.getcwd(), num_bins=10)
+        comet_log_figure(comet_logger, fig_reliability, 'reliability_diagram', epoch, cfg)
+
         comet_log_metrics(comet_logger, {"mean batch train_loss": np.mean(train_loss),
                     "mean batch test_loss": np.mean(test_loss)}, epoch, cfg)
         
@@ -266,5 +272,4 @@ def train_model(device, comet_logger, cfg):
                 break
 
         
-
-    
+  

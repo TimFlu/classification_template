@@ -16,3 +16,9 @@ def comet_log_metrics(comet_logger, metrics, step, cfg):
         comet_logger.log_metrics(metrics, step=step)
     else:
         return
+
+def comet_log_figure(comet_logger, figure, name, step, cfg):
+    if cfg.comet_logger.initialize:
+        comet_logger.log_figure(f'{name}_epoch_{step}', figure, step=step)
+    else:
+        return
