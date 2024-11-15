@@ -1,0 +1,44 @@
+[2024-11-14 17:43:56,891][__main__][INFO] - comet_logger:
+  initialize: false
+  api_key: null
+  project_name: null
+  workspace: null
+  name: null
+training:
+  epochs: 5
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  num_workers: 8
+  optimizer: TODO
+  loss: TODO
+data:
+  data_path: /storage/homefs/tf24s166/code/cifar10/data
+  label_path: TODO
+  target_column: target
+  features: TODO
+
+[2024-11-14 17:43:56,942][__main__][INFO] - Using device: cuda
+[2024-11-14 17:43:59,568][utils.training][INFO] - Class weights: tensor([1., 1., 1., 1., 1., 1., 1., 1., 1., 1.], device='cuda:0')
+[2024-11-14 17:43:59,568][utils.training][INFO] - -------- Epoch: 1/5 --------
+[2024-11-14 17:43:59,568][utils.training][INFO] - Training the model ...
+[2024-11-14 17:44:00,462][utils.training][INFO] - Training Batch 1/1563: Current Batch Loss: 2.312852382659912
+[2024-11-14 17:44:00,462][utils.training][INFO] - Accuracy: 0.15625, Precision: 0.18095238095238092, Recall: 0.14166666666666666, F1: 0.13968253968253969, roc_auc: 0.523878713878714
+[2024-11-14 17:44:00,525][utils.training][INFO] - Testing the model ...
+[2024-11-14 17:44:00,951][utils.training][INFO] - Testing Batch 1/1563: Current Batch Loss: 2.28905987739563
+[2024-11-14 17:44:00,952][utils.training][INFO] - Accuracy: 0.15625, Precision: 0.12428571428571429, Recall: 0.14166666666666666, F1: 0.11805555555555555, roc_auc: 0.5228618081955123
+[2024-11-14 17:44:01,842][utils.training][INFO] - Testing Batch 51/1563: Current Batch Loss: 2.298483371734619
+[2024-11-14 17:44:01,842][utils.training][INFO] - Accuracy: 0.08762254901960784, Precision: 0.08293040705569125, Recall: 0.08813221339374447, F1: 0.07616347198264145, roc_auc: 0.49336915319003366
+[2024-11-14 17:44:02,744][utils.training][INFO] - Testing Batch 101/1563: Current Batch Loss: 2.319159746170044
+[2024-11-14 17:44:02,744][utils.training][INFO] - Accuracy: 0.09158415841584158, Precision: 0.08641883502834388, Recall: 0.09153762678930086, F1: 0.07929700128177988, roc_auc: 0.49533149317398273
+[2024-11-14 17:44:03,657][utils.training][INFO] - Testing Batch 151/1563: Current Batch Loss: 2.2836930751800537
+[2024-11-14 17:44:03,657][utils.training][INFO] - Accuracy: 0.08878311258278146, Precision: 0.08530412396605211, Recall: 0.0892476284075174, F1: 0.07780755725758888, roc_auc: 0.49405072733179256
+[2024-11-14 17:44:04,586][utils.training][INFO] - Testing Batch 201/1563: Current Batch Loss: 2.3128232955932617
+[2024-11-14 17:44:04,586][utils.training][INFO] - Accuracy: 0.09095149253731344, Precision: 0.08572270720707006, Recall: 0.09118130505285663, F1: 0.07946091010791052, roc_auc: 0.4950833489525642
+[2024-11-14 17:44:05,534][utils.training][INFO] - Testing Batch 251/1563: Current Batch Loss: 2.30859375
+[2024-11-14 17:44:05,534][utils.training][INFO] - Accuracy: 0.08939243027888447, Precision: 0.084616064451967, Recall: 0.08949210489203732, F1: 0.07799473979075602, roc_auc: 0.4941560249512317
+[2024-11-14 17:44:06,496][utils.training][INFO] - Testing Batch 301/1563: Current Batch Loss: 2.297017812728882
+[2024-11-14 17:44:06,496][utils.training][INFO] - Accuracy: 0.08918189368770764, Precision: 0.08619206831928368, Recall: 0.08912701333127267, F1: 0.07817881609957732, roc_auc: 0.49395473499819464
+[2024-11-14 17:44:06,987][utils.training][INFO] - Avg Batch Train / Test Loss: 2.312852382659912 / 2.317631721496582
+[2024-11-14 17:44:06,992][utils.training][INFO] - -------- Epoch: 2/5 --------
+[2024-11-14 17:44:06,993][utils.training][INFO] - Training the model ...
