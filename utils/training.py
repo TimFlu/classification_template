@@ -148,7 +148,7 @@ def train_model(device, comet_logger, cfg):
     ### Train and Test ###
     best_test_loss = 10e10
     for epoch in range(1, 1+cfg.training.epochs):
-        logger.info(f'-------- Epoch: {epoch+1}/{cfg.training.epochs} --------')
+        logger.info(f'-------- Epoch: {epoch}/{cfg.training.epochs} --------')
 
         # Store predictions and labels over the epoch
         epoch_labels = {'train': [], 'test': []}
