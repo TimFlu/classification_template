@@ -4,14 +4,13 @@ import torch
 import logging
 logger = logging.getLogger(__name__)
 import hydra
+import os
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import OmegaConf
 
 # TODO: Config name
 @hydra.main(config_path="config", config_name="config_template")
 def main(cfg):
-    logger.info(OmegaConf.to_yaml(cfg))
-
     # Setup comet logger
     if cfg.comet_logger.initialize:
         logger.info("Setting up comet logger")
@@ -20,6 +19,11 @@ def main(cfg):
         comet_logger.log_parameters(OmegaConf.to_container(cfg))
     else:
         comet_logger = None
+    initial_dir = hydra.utils.get_original_cwd()
+    logger.info("Initial dir: {}".format(initial_dir))
+    logger.info("Current dir: {}".format(os.getcwd()))
+    logger.info('Current config: ')
+    logger.info(OmegaConf.to_yaml(cfg))
     
     # Get device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

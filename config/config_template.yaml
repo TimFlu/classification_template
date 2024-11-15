@@ -5,9 +5,13 @@ comet_logger:
   workspace: null
   name: null
 
+early_stopping:
+  initialize: true
+  patience: 3
+  min_delta: 0.001
 
 training:
-  epochs: 5
+  epochs: 10
   batch_size: 32
   learning_rate: 0.001
   weight_decay: 0.0001
