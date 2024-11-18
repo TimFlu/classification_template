@@ -44,6 +44,31 @@ def metric_evaluation(labels, pred, binary=True, num_classes=None):
 
     return accuracy, precision, recall, f1, auc
 
+def expected_calibration_error(labels, y_pred, num_bins=10):
+    y_pred = np.array(y_pred)
+    labels = np.array(labels)
+    y_pred_class = np.argmax(y_pred, axis=1)
+    y_pred_confidence = np.max(y_pred, axis=1)
+
+    bins = np.linspace(0, 1, num_bins + 1) # Bin edges
+    bin_counts = np.zeros(num_bins) # Number of predictions in each bin
+    bin_correct = np.zeros(num_bins) # Number of correct predictions in each bin
+    bin_confidence = np.zeros(num_bins) # Mean confidence in each bin
+
+    for label, pred_conf, pred_class in zip(labels, y_pred_confidence, y_pred_class):
+        bin_idx = np.digitize(pred_conf, bins) - 1
+        if bin_idx >= num_bins: # Account for edge case
+            bin_idx = num_bins - 1
+        bin_counts[bin_idx] += 1
+        bin_confidence[bin_idx] += pred_conf
+        if pred_class == label:
+            bin_correct[bin_idx] += 1
+
+    bin_accuracy = np.nan_to_num(bin_correct / bin_counts)
+    bin_confidence = np.nan_to_num(bin_confidence / bin_counts)
+
+    ece = np.sum(bin_counts * np.abs(bin_accuracy - bin_confidence)) / len(labels)
+    return ece
 
 # **************** Early Stopping ***************** #
 class EarlyStopping:

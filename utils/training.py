@@ -4,7 +4,7 @@ sys.path.append('/storage/homefs/tf24s166/code/cifar10/')
 from utils.datasets import CustomDataset
 from utils.log import comet_log_metrics, comet_log_figure
 from utils.plots import plot_confidence_histogram, plot_reliability_diagram
-from utils.utils import metric_evaluation, EarlyStopping
+from utils.utils import metric_evaluation, EarlyStopping, expected_calibration_error
 import os
 import numpy as np
 import pandas as pd
@@ -172,7 +172,10 @@ def train_model(device, comet_logger, cfg):
 
         comet_log_metrics(comet_logger, {"mean batch train_loss": np.mean(train_loss),
                     "mean batch test_loss": np.mean(test_loss)}, epoch, cfg)
-        
+        comet_log_metrics(comet_logger, {"Expected Calibration Error": expected_calibration_error(epoch_labels['test'], epoch_preds['test'])}, 
+                          epoch, cfg)
+
+
         # Check if new best model
         if np.mean(test_loss) < best_test_loss:
             logger.info('New best model, saving ...')
