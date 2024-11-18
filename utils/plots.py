@@ -63,26 +63,3 @@ def plot_reliability_diagram(y_true, y_pred, save_path, num_bins=10):
     plt.savefig(f"{save_path}/reliability_diagram.png")
 
     return fig
-
-    
-
-
-if __name__ == "__main__":
-    # Example: Multiclass predictions
-    y_true = np.array([1, 1, 0, 1, 2, 2, 1, 0, 2, 1])  # True labels
-    y_pred = np.array([
-        [0.1, 0.2, 0.1],  # Predicted probabilities for sample 1
-        [0.1, 0.6, 0.3],
-        [0.2, 0.2, 0.6],
-        [0.1, 0.8, 0.1],
-        [0.9, 0.05, 0.05],
-        [0.2, 0.3, 0.5],
-        [0.15, 0.7, 0.15],
-        [0.2, 0.1, 0.1],
-        [0.1, 0.3, 0.2],
-        [0.2, 0.7, 0.1]
-    ])
-
-    # Plot confidence histogram
-    plot_confidence_histogram(y_true, y_pred, num_bins=10, save_path=os.getcwd())
-    plot_reliability_diagram(y_true, y_pred, save_path=os.getcwd(), num_bins=10)
