@@ -5,6 +5,7 @@ from utils.datasets import CustomDataset
 from utils.log import comet_log_metrics, comet_log_figure
 from utils.plots import plot_confidence_histogram, plot_reliability_diagram
 from utils.utils import metric_evaluation, EarlyStopping, expected_calibration_error
+from utils.models import TemperatureScaling
 import os
 import numpy as np
 import pandas as pd
@@ -19,6 +20,36 @@ import torchvision.transforms as transforms
 #TODO: Import pretrained weights
 from torchvision.models import ResNet50_Weights
 
+
+def train_temperature_scaling(model, val_loader, device, comet_logger, cfg):
+    model.eval()
+    temperature_module = TemperatureScaling(model).to(device)
+    optimizer = torch.optim.LBFGS([temperature_module.temperature], lr=0.01, max_iter=50)
+    loss_fun = torch.nn.CrossEntropyLoss()
+
+    def closure():
+        optimizer.zero_grad
+        logits_list, labels_list = [], []
+
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images = images.to(device)
+                labels = labels.to(device)
+                logits = model(images)
+                logits_list.append(logits)
+                labels_list.append(labels)
+        
+        logits = torch.cat(logits_list, dim=0)
+        labels = torch.cat(labels_list, dim=0)
+        scaled_logits = temperature_module(logits)
+        loss = loss_fun(scaled_logits, labels)
+        loss.backward()
+        return loss
+    
+    optimizer.step(closure)
+
+    print(f"Optimal temperature: {temperature_module.temperature.item():.4f}")
+    return temperature_module
 
 
 def train_model(device, comet_logger, cfg):
@@ -46,6 +77,8 @@ def train_model(device, comet_logger, cfg):
     output_classes = len(train_dataset.classes) if not train_dataset.binary else 1
     model = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT)
     model.fc = torch.nn.Linear(2048, output_classes) 
+    if cfg.model.use_pretrained:
+        model.load_state_dict(torch.load(cfg.model.path_to_weights))
     model.to(device)
 
     learning_rate = cfg.training.learning_rate
@@ -66,6 +99,9 @@ def train_model(device, comet_logger, cfg):
     ### Train and Test ###
     best_test_loss = 10e10
     for epoch in range(1, 1+cfg.training.epochs):
+        if cfg.model.use_pretrained:
+            logger.info('Using pretrained model, skipping training and testing...')
+            break
         logger.info(f'-------- Epoch: {epoch}/{cfg.training.epochs} --------')
 
         # Store predictions and labels over the epoch
@@ -193,4 +229,24 @@ def train_model(device, comet_logger, cfg):
                 break
 
         
-  
+    # Calibrate the model
+    calibration_model = train_temperature_scaling(model, test_loader, device, comet_logger, cfg)
+    calibrated_preds_list = []
+    epoch_test_labels = []
+    for images, labels in test_loader:
+        inputs = images.to(device)
+        calibrated_preds = calibration_model.predict(inputs)
+        epoch_test_labels += list(labels.reshape(-1))
+        if train_dataset.binary:
+            # Binary classification: apply sigmoid to get probabilities
+            calibrated_preds = list(F.sigmoid(calibrated_preds).detach().cpu().numpy().reshape(-1))
+            calibrated_preds_list += calibrated_preds
+        else:
+            # Multiclass classification: apply softmax to get class probabilities
+            calibrated_preds = list(F.softmax(calibrated_preds, dim=1).detach().cpu().numpy())
+            calibrated_preds_list += calibrated_preds
+
+    fig_conf_hist = plot_confidence_histogram(epoch_test_labels, calibrated_preds_list, save_path=os.getcwd(), num_bins=10)
+    comet_log_figure(comet_logger, fig_conf_hist, 'confidence_histogram_calibrated', epoch, cfg)
+    fig_reliability = plot_reliability_diagram(epoch_test_labels, calibrated_preds_list, save_path=os.getcwd(), num_bins=10)
+    comet_log_figure(comet_logger, fig_reliability, 'reliability_diagram_calibrated', epoch, cfg)
