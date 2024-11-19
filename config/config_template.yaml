@@ -19,6 +19,9 @@ training:
   optimizer: TODO
   loss: TODO
 
+calibration:
+  num_bins: 15
+
 model:
   use_pretrained: true
   path_to_weights: '/storage/homefs/tf24s166/code/cifar10/outputs/2024-11-18/15-44-20/best_model.pth'

@@ -1,7 +1,11 @@
+import sys
+#TODO: Change the path to the working directory
+sys.path.append('/storage/homefs/tf24s166/code/cifar10/') 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+from utils.utils import expected_calibration_error
 
 
 def plot_confidence_histogram(y_true, y_pred, save_path, num_bins=10,):
@@ -47,6 +51,7 @@ def plot_reliability_diagram(y_true, y_pred, save_path, num_bins=10):
 
     bin_accuracy = np.nan_to_num(bin_correct / bin_counts)
     bin_confidence = np.nan_to_num(bin_confidence / bin_counts)
+    ece = expected_calibration_error(y_true, y_pred, num_bins)
 
     fig = plt.figure()
     plt.bar(bin_centers, bin_accuracy, width=1/num_bins, label='Accuracy', alpha=0.7)
@@ -56,6 +61,7 @@ def plot_reliability_diagram(y_true, y_pred, save_path, num_bins=10):
         else:
             plt.bar(diag, acc-diag, bottom=diag, width=1/num_bins, color='red', alpha=0.2, hatch='/')
     plt.plot([0, 1], [0, 1], 'r--', label='Perfect calibration')
+    plt.text(0.8, 0.05, f'ECE={ece:.3f}', bbox=dict(facecolor='grey', alpha=0.8, boxstyle='round', edgecolor='black'))
     plt.title("Reliability diagram")
     plt.xlabel("Confidence")
     plt.ylabel("Accuracy")

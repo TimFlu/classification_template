@@ -28,7 +28,7 @@ def train_temperature_scaling(model, val_loader, device, comet_logger, cfg):
     loss_fun = torch.nn.CrossEntropyLoss()
 
     def closure():
-        optimizer.zero_grad
+        optimizer.zero_grad()
         logits_list, labels_list = [], []
 
         with torch.no_grad():
@@ -48,7 +48,9 @@ def train_temperature_scaling(model, val_loader, device, comet_logger, cfg):
     
     optimizer.step(closure)
 
-    print(f"Optimal temperature: {temperature_module.temperature.item():.4f}")
+    logger.info(f"Optimal temperature: {temperature_module.temperature.item():.4f}")
+    comet_log_metrics(comet_logger, {"Optimal Temperature": temperature_module.temperature.item()}, 0, cfg)
+
     return temperature_module
 
 
@@ -201,14 +203,14 @@ def train_model(device, comet_logger, cfg):
         
 
         ### After Test and Training evaluations ###
-        fig_conf_hist = plot_confidence_histogram(epoch_labels['test'], epoch_preds['test'], save_path=os.getcwd(), num_bins=10)
+        fig_conf_hist = plot_confidence_histogram(epoch_labels['test'], epoch_preds['test'], save_path=os.getcwd(), num_bins=cfg.calibration.num_bins)
         comet_log_figure(comet_logger, fig_conf_hist, 'confidence_histogram', epoch, cfg)
-        fig_reliability = plot_reliability_diagram(epoch_labels['test'], epoch_preds['test'], save_path=os.getcwd(), num_bins=10)
+        fig_reliability = plot_reliability_diagram(epoch_labels['test'], epoch_preds['test'], save_path=os.getcwd(), num_bins=cfg.calibration.num_bins)
         comet_log_figure(comet_logger, fig_reliability, 'reliability_diagram', epoch, cfg)
 
         comet_log_metrics(comet_logger, {"mean batch train_loss": np.mean(train_loss),
                     "mean batch test_loss": np.mean(test_loss)}, epoch, cfg)
-        comet_log_metrics(comet_logger, {"Expected Calibration Error": expected_calibration_error(epoch_labels['test'], epoch_preds['test'])}, 
+        comet_log_metrics(comet_logger, {"Expected Calibration Error": expected_calibration_error(epoch_labels['test'], epoch_preds['test'], num_bins=cfg.calibration.num_bins)}, 
                           epoch, cfg)
 
 
@@ -229,9 +231,11 @@ def train_model(device, comet_logger, cfg):
                 break
 
         
-    # Calibrate the model
+    ### Calibrate the model ###
+    logger.info("Calibrating the model ...")
     calibration_model = train_temperature_scaling(model, test_loader, device, comet_logger, cfg)
     calibrated_preds_list = []
+    preds_list = []
     epoch_test_labels = []
     for images, labels in test_loader:
         inputs = images.to(device)
@@ -241,12 +245,20 @@ def train_model(device, comet_logger, cfg):
             # Binary classification: apply sigmoid to get probabilities
             calibrated_preds = list(F.sigmoid(calibrated_preds).detach().cpu().numpy().reshape(-1))
             calibrated_preds_list += calibrated_preds
+            preds_list += list(F.sigmoid(model(inputs)).detach().cpu().numpy().reshape(-1))
         else:
             # Multiclass classification: apply softmax to get class probabilities
             calibrated_preds = list(F.softmax(calibrated_preds, dim=1).detach().cpu().numpy())
             calibrated_preds_list += calibrated_preds
-
-    fig_conf_hist = plot_confidence_histogram(epoch_test_labels, calibrated_preds_list, save_path=os.getcwd(), num_bins=10)
+            preds_list += list(F.softmax(model(inputs), dim=1).detach().cpu().numpy())
+    # Log calibration figures for calibrated and non calibrated outputs
+    fig_conf_hist = plot_confidence_histogram(epoch_test_labels, calibrated_preds_list, save_path=os.getcwd(), num_bins=cfg.calibration.num_bins)
     comet_log_figure(comet_logger, fig_conf_hist, 'confidence_histogram_calibrated', epoch, cfg)
-    fig_reliability = plot_reliability_diagram(epoch_test_labels, calibrated_preds_list, save_path=os.getcwd(), num_bins=10)
+    fig_reliability = plot_reliability_diagram(epoch_test_labels, calibrated_preds_list, save_path=os.getcwd(), num_bins=cfg.calibration.num_bins)
     comet_log_figure(comet_logger, fig_reliability, 'reliability_diagram_calibrated', epoch, cfg)
+    if cfg.model.use_pretrained:
+        fig_conf_hist = plot_confidence_histogram(epoch_test_labels, preds_list, save_path=os.getcwd(), num_bins=cfg.calibration.num_bins)
+        comet_log_figure(comet_logger, fig_conf_hist, 'confidence_histogram_uncalibrated', epoch, cfg)
+        fig_reliability = plot_reliability_diagram(epoch_test_labels, preds_list, save_path=os.getcwd(), num_bins=cfg.calibration.num_bins)
+        comet_log_figure(comet_logger, fig_reliability, 'reliability_diagram_uncalibrated', epoch, cfg)
+
