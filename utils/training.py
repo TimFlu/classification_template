@@ -80,7 +80,7 @@ def train_model(device, comet_logger, cfg):
     model = torchvision.models.resnet50(weights=ResNet50_Weights.DEFAULT)
     model.fc = torch.nn.Linear(2048, output_classes) 
     if cfg.model.use_pretrained:
-        model.load_state_dict(torch.load(cfg.model.path_to_weights))
+        model.load_state_dict(torch.load(cfg.model.path_to_weights, weights_only=True))
     model.to(device)
 
     learning_rate = cfg.training.learning_rate
