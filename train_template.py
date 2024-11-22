@@ -14,8 +14,8 @@ def main(cfg):
     # Setup comet logger
     if cfg.comet_logger.initialize:
         logger.info("Setting up comet logger")
-        script_name = HydraConfig.get().job.name
-        comet_logger = setup_comet_logger(experiment_name=script_name)
+        config_name = HydraConfig.get().job.config_name
+        comet_logger = setup_comet_logger(experiment_name=config_name)
         comet_logger.log_parameters(OmegaConf.to_container(cfg))
     else:
         comet_logger = None
