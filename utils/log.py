@@ -5,7 +5,7 @@ from comet_ml import start
 def setup_comet_logger(experiment_name):
     experiment = start(
     api_key="5OzmIvJNsXYfBCTb5CTYF8Bqy",
-    project_name="perormance-metric-estim",
+    project_name="performance-metric-estim",
     workspace="timflu",
     )
     experiment.set_name(experiment_name)
