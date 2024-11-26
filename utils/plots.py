@@ -58,18 +58,18 @@ def plot_reliability_diagram(y_true, y_pred, save_path, cfg, step, logger, case,
         bin_correct = np.zeros(num_bins) # Number of correct predictions in each bin
         bin_confidence = np.zeros(num_bins) # Mean confidence in each bin
 
-        for label, pred_conf, pred_class in zip(y_true, y_pred_confidence, y_pred_class):
+        for label, pred_conf in zip(y_true, y_pred_confidence):
             bin_idx = np.digitize(pred_conf, bins, right=True) - 1
             if bin_idx >= num_bins: # Account for edge case
                 bin_idx = num_bins - 1
             bin_counts[bin_idx] += 1
             bin_confidence[bin_idx] += pred_conf
-            if pred_class == label:
-                bin_correct[bin_idx] += 1
+            bin_correct[bin_idx] += label
 
         bin_accuracy = np.nan_to_num(bin_correct / bin_counts)
         bin_confidence = np.nan_to_num(bin_confidence / bin_counts)
-        ece = expected_calibration_error(y_true, y_pred, case, num_bins)
+        ece = expected_calibration_error(y_true, y_pred_confidence, case, num_bins, multi_label_shortened=case=='multi_label',
+                                         multi_class_shortened=case=='multi_class')
 
         fig = plt.figure()
         plt.bar(bin_centers, bin_accuracy, width=1/num_bins, label='Accuracy', alpha=0.7)
@@ -94,9 +94,14 @@ def plot_reliability_diagram(y_true, y_pred, save_path, cfg, step, logger, case,
         y_pred_confidence = y_pred
         plot_figure(y_true, y_pred_confidence, y_pred_class, class_name=cfg.data.targets[0])
     elif case == 'multi_class':
-        y_pred_class = np.argmax(y_pred, axis=1)
-        y_pred_confidence = np.max(y_pred, axis=1)
-        plot_figure(y_true, y_pred_confidence, y_pred_class)
+        for i in range(y_pred.shape[1]):
+            y_pred_class = None #np.argmax(y_pred, axis=1)
+            y_pred_confidence = y_pred[:, i].reshape(-1, 1)
+            binary_y_true = (y_true == i).astype(int) # Convert to binary
+            plot_figure(binary_y_true, y_pred_confidence, y_pred_class, class_name=f'class_{i}')
+        # y_pred_class = np.argmax(y_pred, axis=1)
+        # y_pred_confidence = np.max(y_pred, axis=1)
+        #plot_figure(y_true, y_pred_confidence, y_pred_class)
     elif case == 'multi_label':
         for i in range(y_pred.shape[1]):
             y_pred_class = np.round(y_pred[:, i]).reshape(-1, 1)

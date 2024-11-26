@@ -43,7 +43,7 @@ def metric_evaluation(labels, pred, case):
 
     return accuracy, precision, recall, f1, auc
 
-def expected_calibration_error(labels, y_pred, case, num_bins=10):
+def expected_calibration_error(labels, y_pred, case, num_bins=10, multi_label_shortened=False, multi_class_shortened=False):
 
     def calc_ece(labels, y_pred_confidence, y_pred_class):
         bins = np.linspace(0, 1, num_bins + 1) # Bin edges
@@ -57,8 +57,7 @@ def expected_calibration_error(labels, y_pred, case, num_bins=10):
                 bin_idx = num_bins - 1
             bin_counts[bin_idx] += 1
             bin_confidence[bin_idx] += pred_conf
-            if pred_class == label:
-                bin_correct[bin_idx] += 1
+            bin_correct[bin_idx] += label
 
         bin_accuracy = np.nan_to_num(bin_correct / bin_counts)
         bin_confidence = np.nan_to_num(bin_confidence / bin_counts)
@@ -66,11 +65,11 @@ def expected_calibration_error(labels, y_pred, case, num_bins=10):
         ece = np.sum(bin_counts * np.abs(bin_accuracy - bin_confidence)) / len(labels)
         return ece
 
-    if case == 'binary':
+    if case == 'binary' or multi_label_shortened:
         y_pred_class = np.round(y_pred)
         y_pred_confidence = y_pred
         return calc_ece(labels, y_pred_confidence, y_pred_class)
-    elif case == 'multi_class':
+    elif case == 'multi_class' or multi_class_shortened:
         y_pred_class = np.argmax(y_pred, axis=1)
         y_pred_confidence = np.max(y_pred, axis=1)
         return calc_ece(labels, y_pred_confidence, y_pred_class)
